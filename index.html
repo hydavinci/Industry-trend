@@ -94,7 +94,7 @@
       <div class="card"><div class="name">2024年全球就业</div><div class="value" id="totalNow">-</div><div class="hint">全球 · 百万人</div></div>
       <div class="card"><div class="name">2029E预测就业</div><div class="value" id="totalForecast">-</div><div class="hint">基于当前预测模型</div></div>
       <div class="card"><div class="name">增长最快行业</div><div class="value" id="fastest">-</div><div class="hint">未来5年预测 CAGR</div></div>
-      <div class="card"><div class="name">收缩风险行业</div><div class="value" id="weakest">-</div><div class="hint">未来5年预测 CAGR</div></div>
+      <div class="card"><div class="name" id="weakestLabel">收缩风险行业</div><div class="value" id="weakest">-</div><div class="hint" id="weakestHint">未来5年预测 CAGR</div></div>
     </section>
 
     <section class="grid">
@@ -214,11 +214,14 @@ function render() {
   const fastestEl = document.getElementById('fastest');
   const weakestEl = document.getElementById('weakest');
   fastestEl.textContent = `${rankedGrowth[0].industry} ${pct(rankedGrowth[0].cagr5)}`;
-  weakestEl.textContent = `${rankedGrowth.at(-1).industry} ${pct(rankedGrowth.at(-1).cagr5)}`;
+  const weakest = rankedGrowth.at(-1);
+  weakestEl.textContent = `${weakest.industry} ${pct(weakest.cagr5)}`;
+  document.getElementById('weakestLabel').textContent = weakest.cagr5 < 0 ? '收缩风险行业' : '增长最慢行业';
+  document.getElementById('weakestHint').textContent = weakest.cagr5 < 0 ? '未来5年预测 CAGR 为负' : '未来5年预测 CAGR 最低';
   fastestEl.classList.toggle('positive', rankedGrowth[0].cagr5 >= 0);
   fastestEl.classList.toggle('negative', rankedGrowth[0].cagr5 < 0);
-  weakestEl.classList.toggle('positive', rankedGrowth.at(-1).cagr5 >= 0);
-  weakestEl.classList.toggle('negative', rankedGrowth.at(-1).cagr5 < 0);
+  weakestEl.classList.toggle('positive', weakest.cagr5 >= 0);
+  weakestEl.classList.toggle('negative', weakest.cagr5 < 0);
 
   trendChart.setOption({
     backgroundColor: 'transparent',
