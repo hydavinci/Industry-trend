@@ -199,10 +199,11 @@ function render() {
   const data = enrich(model);
   const chosen = select.value;
   const visible = allMode ? data : data.filter(d => d.industry === chosen);
+  const summaryData = visible.length ? visible : data;
   const allYears = yearsHistory.concat(yearsForecast);
-  const nowTotal = data.reduce((s,d)=>s+d.values.at(-1),0);
-  const forecastTotal = data.reduce((s,d)=>s+d.forecast.at(-1),0);
-  const rankedGrowth = data.map(d => ({
+  const nowTotal = summaryData.reduce((s,d)=>s+d.values.at(-1),0);
+  const forecastTotal = summaryData.reduce((s,d)=>s+d.forecast.at(-1),0);
+  const rankedGrowth = summaryData.map(d => ({
     industry: d.industry,
     cagr5: Math.pow(d.forecast.at(-1) / d.values.at(-1), 1 / 5) - 1
   })).sort((a,b)=>b.cagr5-a.cagr5);
@@ -228,18 +229,18 @@ function render() {
       markLine: idx === 0 ? { silent: true, symbol: 'none', lineStyle: { type: 'dashed', color: '#fbbf24' }, data: [{ xAxis: yearsHistory.at(-1) }] } : undefined,
       areaStyle: allMode ? undefined : { opacity: .12 }
     }))
-  });
+  }, { notMerge: true });
 
-  const rank = [...data].sort((a,b)=>a.values.at(-1)-b.values.at(-1));
+  const rank = [...summaryData].sort((a,b)=>a.values.at(-1)-b.values.at(-1));
   rankChart.setOption({
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: v => `${fmt(v)} ${units}` },
     grid: { top: 8, left: 92, right: 24, bottom: 32 },
     xAxis: { type: 'value', axisLabel: { color: '#aab6d3' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,.08)' } } },
     yAxis: { type: 'category', data: rank.map(d=>d.industry), axisLabel: { color: '#cbd5e1' }, axisLine: { show: false } },
     series: [{ type: 'bar', data: rank.map(d=>d.values.at(-1)), itemStyle: { borderRadius: [0,8,8,0], color: new echarts.graphic.LinearGradient(0,0,1,0,[{offset:0,color:'#38bdf8'},{offset:1,color:'#a78bfa'}]) } }]
-  });
+  }, { notMerge: true });
 
-  document.getElementById('tbody').innerHTML = data.map(d => {
+  document.getElementById('tbody').innerHTML = summaryData.map(d => {
     const change = d.values.at(-1) / d.values[0] - 1;
     const cagr5 = Math.pow(d.forecast.at(-1) / d.values.at(-1), 1 / 5) - 1;
     return `<tr><td>${d.industry}</td><td>${fmt(d.values[0])}</td><td>${fmt(d.values.at(-1))}</td><td>${fmt(d.forecast.at(-1))}</td><td class="${change>=0?'positive':'negative'}">${pct(change)}</td><td class="${cagr5>=0?'positive':'negative'}">${pct(cagr5)}</td></tr>`;
