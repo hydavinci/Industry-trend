@@ -80,8 +80,6 @@
     <section class="toolbar">
       <label for="industrySelect">行业</label>
       <select id="industrySelect"></select>
-      <button id="showAll" class="active">显示全部行业</button>
-      <button id="showSelected">仅看所选行业</button>
       <label for="modelSelect">预测模型</label>
       <select id="modelSelect">
         <option value="damped" selected>Damped ETS（推荐）</option>
@@ -95,7 +93,7 @@
         <option value="optimistic">乐观</option>
       </select>
     </section>
-    <div class="toolbar-note" id="toolbarNote">当前显示全部行业；选择某个行业会自动切换为“仅看所选行业”。</div>
+    <div class="toolbar-note" id="toolbarNote">当前显示全部行业。</div>
 
     <section class="cards">
       <div class="card"><div class="name">2024年全球就业</div><div class="value" id="totalNow">-</div><div class="hint">全球 · 百万人</div></div>
@@ -275,23 +273,21 @@ const select = document.getElementById('industrySelect');
 document.getElementById('historyStartHead').textContent = yearsHistory[0];
 document.getElementById('historyEndHead').textContent = yearsHistory.at(-1);
 document.getElementById('forecastEndHead').textContent = `${yearsForecast.at(-1)}E`;
+select.add(new Option('全部行业', '__all__'));
 raw.forEach(d => select.add(new Option(d.industry, d.industry)));
 
 let allMode = true;
 
-document.getElementById('showAll').onclick = () => { allMode = true; setModeButtons(); render(); };
-document.getElementById('showSelected').onclick = () => { allMode = false; setModeButtons(); render(); };
-select.onchange = () => { allMode = false; setModeButtons(); render(); };
+select.onchange = () => { allMode = select.value === '__all__'; setModeButtons(); render(); };
 document.getElementById('modelSelect').onchange = () => render();
 document.getElementById('scenarioSelect').onchange = () => render();
 window.addEventListener('resize', () => { trendChart.resize(); rankChart.resize(); });
 
 function setModeButtons() {
-  document.getElementById('showAll').classList.toggle('active', allMode);
-  document.getElementById('showSelected').classList.toggle('active', !allMode);
+  allMode = select.value === '__all__';
   document.getElementById('toolbarNote').textContent = allMode
-    ? '当前显示全部行业；选择某个行业会自动切换为“仅看所选行业”。'
-    : `当前仅显示：${select.value}；点击“显示全部行业”可恢复全行业对比。`;
+    ? '当前显示全部行业。'
+    : `当前仅显示：${select.value}；在下拉列表选择“全部行业”可恢复全行业对比。`;
 }
 
 function fmt(n) { return Number(n).toLocaleString('zh-CN'); }
@@ -303,6 +299,7 @@ function render() {
   const scenario = document.getElementById('scenarioSelect').value;
   const data = enrich(model, scenario);
   const chosen = select.value;
+  allMode = chosen === '__all__';
   const visible = allMode ? data : data.filter(d => d.industry === chosen);
   const summaryData = visible.length ? visible : data;
   const allYears = yearsHistory.concat(yearsForecast);
