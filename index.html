@@ -68,9 +68,9 @@
 </head>
 <body>
   <header>
-    <div class="badge">正式数据 · 国家统计局年鉴 · 10年历史 + 5年预测</div>
+    <div class="badge">正式数据 · ILOSTAT 全球 · 10年历史 + 5年预测</div>
     <h1>行业从业人员趋势与预测</h1>
-    <div class="subtitle">按国家统计局《中国统计年鉴2024》表 4-6，查看城镇非私营单位分行业就业人员数（年底数）的 10 年历史、结构变化，并用可替换的预测模型展示未来 5 年预测。</div>
+    <div class="subtitle">按 ILOSTAT 全球就业数据，查看全球分行业就业人数的 10 年历史、结构变化，并用可替换的预测模型展示未来 5 年预测。</div>
   </header>
 
   <main>
@@ -87,8 +87,8 @@
     </section>
 
     <section class="cards">
-      <div class="card"><div class="name">2023年总从业</div><div class="value" id="totalNow">-</div><div class="hint">城镇非私营单位 · 万人</div></div>
-      <div class="card"><div class="name">2028E预测总从业</div><div class="value" id="totalForecast">-</div><div class="hint">基于当前预测模型</div></div>
+      <div class="card"><div class="name">2024年全球就业</div><div class="value" id="totalNow">-</div><div class="hint">全球 · 百万人</div></div>
+      <div class="card"><div class="name">2029E预测就业</div><div class="value" id="totalForecast">-</div><div class="hint">基于当前预测模型</div></div>
       <div class="card"><div class="name">增长最快行业</div><div class="value" id="fastest">-</div><div class="hint">未来5年预测 CAGR</div></div>
       <div class="card"><div class="name">收缩风险行业</div><div class="value" id="weakest">-</div><div class="hint">未来5年预测 CAGR</div></div>
     </section>
@@ -113,39 +113,34 @@
       </table>
     </section>
 
-    <p class="note">数据来源：<a href="https://www.stats.gov.cn/sj/ndsj/2024/indexch.htm" target="_blank" rel="noopener">国家统计局《中国统计年鉴2024》表4-6</a>「按行业分城镇非私营单位就业人员数（年底数）」。口径：城镇非私营单位，单位：万人，历史年份 2014–2023；2024E–2028E 为模型预测，不是官方预测。</p>
+    <p class="note">数据来源：<a href="https://ilostat.ilo.org/data/" target="_blank" rel="noopener">ILOSTAT</a> 指标 EMP_TEMP_SEX_ECO_NB_A（Employment by sex and economic activity）。口径：World/X01、Total sex、ISIC Rev.4 分行业，单位：百万人，历史年份 2015–2024；2025E–2029E 为页面模型预测，不是 ILO 官方预测。</p>
   </main>
 
 <script>
-const yearsHistory = Array.from({length: 10}, (_, i) => 2014 + i);
-const yearsForecast = Array.from({length: 5}, (_, i) => 2024 + i);
-const units = '万人';
+const yearsHistory = Array.from({length: 10}, (_, i) => 2015 + i);
+const yearsForecast = Array.from({length: 5}, (_, i) => 2025 + i);
+const units = '百万人';
 const dataSource = {
-  name: '国家统计局《中国统计年鉴2024》表4-6',
-  url: 'https://www.stats.gov.cn/sj/ndsj/2024/indexch.htm',
-  scope: '按行业分城镇非私营单位就业人员数（年底数）'
+  name: 'ILOSTAT EMP_TEMP_SEX_ECO_NB_A',
+  url: 'https://ilostat.ilo.org/data/',
+  scope: 'World/X01, total sex, employment by economic activity (ISIC Rev.4)'
 };
 
 const raw = [
-  { industry: '农、林、牧、渔业', values: [284.6,270.0,263.2,255.4,192.6,134.1,85.7,86.8,78.9,69.3] },
-  { industry: '采矿业', values: [596.5,545.8,490.9,455.4,414.4,367.7,352.1,344.8,340.9,329.3] },
-  { industry: '制造业', values: [5243.1,5068.7,4893.8,4635.5,4178.3,3832.0,3805.5,3828.0,3738.4,3577.8] },
-  { industry: '电力、热力、燃气及水生产和供应业', values: [403.7,396.0,387.6,377.0,369.2,373.1,379.7,382.0,375.3,361.0] },
-  { industry: '建筑业', values: [2921.2,2796.0,2724.7,2643.2,2710.9,2270.5,2153.3,1971.9,1835.2,1638.1] },
-  { industry: '批发和零售业', values: [888.6,883.3,875.0,842.8,823.3,830.0,786.9,797.5,785.3,782.4] },
-  { industry: '交通运输、仓储和邮政业', values: [861.4,854.4,849.5,843.9,819.0,815.5,812.2,798.1,776.2,767.9] },
-  { industry: '住宿和餐饮业', values: [289.3,276.1,269.7,265.9,269.8,265.2,256.6,265.3,255.0,288.4] },
-  { industry: '信息传输、软件和信息技术服务业', values: [336.3,349.9,364.1,395.4,424.3,455.3,487.1,519.2,529.2,529.5] },
-  { industry: '金融业', values: [566.3,606.8,665.2,688.8,699.3,826.1,859.0,818.5,739.6,692.4] },
-  { industry: '房地产业', values: [402.2,417.3,431.7,444.8,466.0,510.3,525.4,529.3,511.5,509.4] },
-  { industry: '租赁和商务服务业', values: [449.4,474.0,488.4,522.6,529.5,660.4,643.6,680.3,738.3,827.8] },
-  { industry: '科学研究和技术服务业', values: [408.0,410.6,419.6,420.4,411.5,434.3,431.2,450.1,455.8,451.7] },
-  { industry: '水利、环境和公共设施管理业', values: [269.1,273.3,269.6,268.5,260.6,244.5,245.6,252.6,253.6,257.9] },
-  { industry: '居民服务、修理和其他服务业', values: [75.4,75.2,75.4,78.2,77.4,86.3,82.8,85.9,90.1,85.2] },
-  { industry: '教育', values: [1727.3,1736.5,1729.2,1730.4,1735.6,1909.3,1958.9,1971.9,1950.6,1940.5] },
-  { industry: '卫生和社会工作', values: [810.4,841.6,867.0,897.9,912.4,1006.2,1051.9,1094.7,1114.5,1126.9] },
-  { industry: '文化、体育和娱乐业', values: [145.5,149.1,150.8,152.2,146.6,151.2,149.5,151.7,146.5,147.0] },
-  { industry: '公共管理、社会保障和社会组织', values: [1599.3,1637.8,1672.6,1725.6,1817.5,1989.8,1972.2,1985.8,1985.8,1985.8] }
+  { industry: '农业、林业和渔业', values: [905.4,898.8,890.3,880.1,873.4,884.6,900.0,922.7,932.5,928.7] },
+  { industry: '采矿和采石业', values: [22.1,21.8,22.0,22.5,22.1,22.1,21.7,22.7,22.8,23.0] },
+  { industry: '制造业', values: [455.3,457.9,463.3,468.4,472.2,458.2,470.6,475.6,487.0,489.3] },
+  { industry: '电力、燃气、供水和废弃物管理', values: [29.4,29.9,30.2,30.7,31.1,30.5,31.1,31.5,32.1,32.6] },
+  { industry: '建筑业', values: [234.9,240.8,246.0,252.5,259.1,249.1,268.1,282.7,285.6,294.4] },
+  { industry: '批发零售；机动车维修', values: [449.2,457.0,465.1,473.6,484.1,470.4,489.1,501.5,515.4,524.1] },
+  { industry: '运输仓储、信息通信', values: [190.2,194.9,200.4,206.3,212.5,206.4,217.5,224.2,230.5,235.2] },
+  { industry: '住宿和餐饮业', values: [115.0,119.7,123.2,127.7,131.7,118.3,122.8,129.6,137.0,141.1] },
+  { industry: '金融和保险业', values: [46.5,47.7,48.4,49.6,50.8,50.1,51.5,52.0,54.3,55.2] },
+  { industry: '房地产、专业技术和行政支持', values: [137.2,141.7,147.3,151.3,155.4,151.6,157.3,162.2,168.7,173.9] },
+  { industry: '公共管理和社会保障', values: [140.7,141.8,141.9,143.7,143.7,146.5,146.9,147.9,149.9,150.8] },
+  { industry: '教育', values: [155.4,158.8,161.4,164.8,166.6,162.4,164.4,166.2,170.9,173.6] },
+  { industry: '卫生和社会工作', values: [122.3,125.1,127.4,130.8,134.4,135.1,138.5,140.7,144.6,147.5] },
+  { industry: '文娱、其他服务和家庭/国际组织活动', values: [172.4,176.4,180.7,185.9,192.1,174.0,178.0,183.8,189.1,193.0] }
 ];
 
 function forecastCagr(values) {
