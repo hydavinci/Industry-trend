@@ -84,8 +84,15 @@
       <button id="showSelected">仅看所选行业</button>
       <label for="modelSelect">预测模型</label>
       <select id="modelSelect">
+        <option value="damped" selected>Damped ETS（推荐）</option>
         <option value="cagr">CAGR 趋势外推</option>
         <option value="linear">线性回归</option>
+      </select>
+      <label for="scenarioSelect">情景</label>
+      <select id="scenarioSelect">
+        <option value="base" selected>基准</option>
+        <option value="conservative">保守</option>
+        <option value="optimistic">乐观</option>
       </select>
     </section>
     <div class="toolbar-note" id="toolbarNote">当前显示全部行业；选择某个行业会自动切换为“仅看所选行业”。</div>
@@ -117,7 +124,7 @@
       </table>
     </section>
 
-    <p class="note">数据来源：<a href="https://ilostat.ilo.org/data/" target="_blank" rel="noopener">ILOSTAT</a> 指标 EMP_TEMP_SEX_ECO_NB_A（Employment by sex and economic activity）。口径：World/X01、Total sex、ISIC Rev.4 高层行业，单位：百万人，历史年份 2015–2024；2025E–2029E 为页面模型预测，不是 ILO 官方预测。说明：全球序列中部分 ISIC 一级行业被合并发布，例如 H+J（运输仓储 + 信息通信，含软件/IT 服务）、L+M+N（房地产 + 专业技术 + 行政支持）。</p>
+    <p class="note">数据来源：<a href="https://ilostat.ilo.org/data/" target="_blank" rel="noopener">ILOSTAT</a> 指标 EMP_TEMP_SEX_ECO_NB_A（Employment by sex and economic activity）。口径：World/X01、Total sex、ISIC Rev.4 高层行业，单位：百万人，历史年份 2015–2024；2025E–2029E 为页面模型预测，不是 ILO 官方预测。默认模型为 Damped ETS（阻尼指数平滑），比 CAGR 更适合短年度序列；情景用于调节趋势强度。说明：全球序列中部分 ISIC 一级行业被合并发布，例如 H+J（运输仓储 + 信息通信，含软件/IT 服务）、L+M+N（房地产 + 专业技术 + 行政支持）。</p>
   </main>
 
 <script>
@@ -147,11 +154,24 @@ const raw = [
   { industry: '文娱、其他服务和家庭/国际组织活动', values: [172.4,176.4,180.7,185.9,192.1,174.0,178.0,183.8,189.1,193.0] }
 ];
 
+function round1(n) { return Math.round(n * 10) / 10; }
+
+function applyScenario(values, forecast, scenario) {
+  const last = values.at(-1);
+  return forecast.map(v => {
+    const delta = v - last;
+    let factor = 1;
+    if (scenario === 'conservative') factor = delta >= 0 ? 0.65 : 1.25;
+    if (scenario === 'optimistic') factor = delta >= 0 ? 1.25 : 0.65;
+    return round1(Math.max(0, last + delta * factor));
+  });
+}
+
 function forecastCagr(values) {
   const recent = values.slice(-5);
   const cagr = Math.pow(recent.at(-1) / recent[0], 1 / (recent.length - 1)) - 1;
   let last = values.at(-1);
-  return yearsForecast.map(() => Math.round(last *= (1 + cagr)));
+  return yearsForecast.map(() => round1(last *= (1 + cagr)));
 }
 
 function forecastLinear(values) {
@@ -161,11 +181,59 @@ function forecastLinear(values) {
   const meanY = values.reduce((a,b)=>a+b,0)/n;
   const slope = xs.reduce((s,x,i)=>s+(x-meanX)*(values[i]-meanY),0) / xs.reduce((s,x)=>s+(x-meanX)**2,0);
   const intercept = meanY - slope * meanX;
-  return yearsForecast.map((_, i) => Math.max(0, Math.round(intercept + slope * (n + i))));
+  return yearsForecast.map((_, i) => round1(Math.max(0, intercept + slope * (n + i))));
 }
 
-function enrich(model) {
-  return raw.map(d => ({...d, forecast: model === 'linear' ? forecastLinear(d.values) : forecastCagr(d.values)}));
+function holtDampedForecast(values, alpha, beta, phi) {
+  let level = values[0];
+  let trend = values[1] - values[0];
+  for (let t = 1; t < values.length; t++) {
+    const prevLevel = level;
+    level = alpha * values[t] + (1 - alpha) * (level + phi * trend);
+    trend = beta * (level - prevLevel) + (1 - beta) * phi * trend;
+  }
+  return yearsForecast.map((_, i) => {
+    const h = i + 1;
+    const dampedTrend = phi * (1 - Math.pow(phi, h)) / (1 - phi) * trend;
+    return round1(Math.max(0, level + dampedTrend));
+  });
+}
+
+function dampedSse(values, alpha, beta, phi) {
+  let level = values[0];
+  let trend = values[1] - values[0];
+  let sse = 0;
+  for (let t = 1; t < values.length; t++) {
+    const pred = level + phi * trend;
+    sse += (values[t] - pred) ** 2;
+    const prevLevel = level;
+    level = alpha * values[t] + (1 - alpha) * pred;
+    trend = beta * (level - prevLevel) + (1 - beta) * phi * trend;
+  }
+  return sse;
+}
+
+function forecastDamped(values) {
+  let best = { alpha: 0.5, beta: 0.2, phi: 0.9, sse: Infinity };
+  for (const alpha of [0.2,0.35,0.5,0.65,0.8]) {
+    for (const beta of [0.05,0.15,0.3,0.5]) {
+      for (const phi of [0.8,0.88,0.94,0.98]) {
+        const sse = dampedSse(values, alpha, beta, phi);
+        if (sse < best.sse) best = { alpha, beta, phi, sse };
+      }
+    }
+  }
+  return holtDampedForecast(values, best.alpha, best.beta, best.phi);
+}
+
+function forecastByModel(values, model) {
+  if (model === 'linear') return forecastLinear(values);
+  if (model === 'cagr') return forecastCagr(values);
+  return forecastDamped(values);
+}
+
+function enrich(model, scenario) {
+  return raw.map(d => ({...d, forecast: applyScenario(d.values, forecastByModel(d.values, model), scenario)}));
 }
 
 const trendChart = echarts.init(document.getElementById('trend'));
@@ -182,6 +250,7 @@ document.getElementById('showAll').onclick = () => { allMode = true; setModeButt
 document.getElementById('showSelected').onclick = () => { allMode = false; setModeButtons(); render(); };
 select.onchange = () => { allMode = false; setModeButtons(); render(); };
 document.getElementById('modelSelect').onchange = () => render();
+document.getElementById('scenarioSelect').onchange = () => render();
 window.addEventListener('resize', () => { trendChart.resize(); rankChart.resize(); });
 
 function setModeButtons() {
@@ -197,7 +266,8 @@ function pct(n) { return `${(n*100).toFixed(1)}%`; }
 
 function render() {
   const model = document.getElementById('modelSelect').value;
-  const data = enrich(model);
+  const scenario = document.getElementById('scenarioSelect').value;
+  const data = enrich(model, scenario);
   const chosen = select.value;
   const visible = allMode ? data : data.filter(d => d.industry === chosen);
   const summaryData = visible.length ? visible : data;
