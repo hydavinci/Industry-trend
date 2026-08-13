@@ -124,7 +124,16 @@
       </table>
     </section>
 
-    <p class="note">数据来源：<a href="https://ilostat.ilo.org/data/" target="_blank" rel="noopener">ILOSTAT</a> 指标 EMP_TEMP_SEX_ECO_NB_A（Employment by sex and economic activity）。口径：World/X01、Total sex、ISIC Rev.4 高层行业，单位：百万人，历史年份 2015–2024；2025E–2029E 为页面模型预测，不是 ILO 官方预测。默认模型为 Damped ETS（阻尼指数平滑），比 CAGR 更适合短年度序列；情景用于调节趋势强度。说明：全球序列中部分 ISIC 一级行业被合并发布，例如 H+J（运输仓储 + 信息通信，含软件/IT 服务）、L+M+N（房地产 + 专业技术 + 行政支持）。</p>
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>行业（前行业口径）</th><th>2024失业率估算</th><th>失业人数</th><th>就业人数</th><th>样本国家/地区</th></tr>
+        </thead>
+        <tbody id="unemploymentTbody"></tbody>
+      </table>
+    </section>
+
+    <p class="note">数据来源：<a href="https://ilostat.ilo.org/data/" target="_blank" rel="noopener">ILOSTAT</a> 指标 EMP_TEMP_SEX_ECO_NB_A（Employment by sex and economic activity）。口径：World/X01、Total sex、ISIC Rev.4 高层行业，单位：百万人，历史年份 2015–2024；2025E–2029E 为页面模型预测，不是 ILO 官方预测。默认模型为 Damped ETS（阻尼指数平滑），比 CAGR 更适合短年度序列；情景用于调节趋势强度。失业率表使用 ILOSTAT 指标 UNE_PUNE_SEX_ECO_NB_A（previously employed persons by former economic activity）与就业人数按可比样本国家/地区合并估算，代表“上一份工作所属行业”的失业压力，不是严格意义上的当前行业失业率。说明：全球序列中部分 ISIC 一级行业被合并发布，例如 H+J（运输仓储 + 信息通信，含软件/IT 服务）、L+M+N（房地产 + 专业技术 + 行政支持）。</p>
   </main>
 
 <script>
@@ -152,6 +161,30 @@ const raw = [
   { industry: '教育', values: [155.4,158.8,161.4,164.8,166.6,162.4,164.4,166.2,170.9,173.6] },
   { industry: '卫生和社会工作', values: [122.3,125.1,127.4,130.8,134.4,135.1,138.5,140.7,144.6,147.5] },
   { industry: '文娱、其他服务和家庭/国际组织活动', values: [172.4,176.4,180.7,185.9,192.1,174.0,178.0,183.8,189.1,193.0] }
+];
+
+const unemploymentByIndustry = [
+  { industry: '家庭作为雇主', unemploymentRate: 9.9, unemployed: 0.5, employed: 4.5, countries: 25 },
+  { industry: '住宿和餐饮业', unemploymentRate: 7.1, unemployed: 2.6, employed: 33.5, countries: 51 },
+  { industry: '行政和支持服务', unemploymentRate: 5.7, unemployed: 1.4, employed: 23.2, countries: 45 },
+  { industry: '文化、体育和娱乐', unemploymentRate: 5.1, unemployed: 0.5, employed: 9.5, countries: 35 },
+  { industry: '建筑业', unemploymentRate: 4.4, unemployed: 2.3, employed: 49.7, countries: 51 },
+  { industry: '批发零售；机动车维修', unemploymentRate: 4.4, unemployed: 4.3, employed: 93.3, countries: 53 },
+  { industry: '采矿和采石业', unemploymentRate: 4.3, unemployed: 0.1, employed: 3.1, countries: 15 },
+  { industry: '信息和通信（含软件/IT）', unemploymentRate: 3.7, unemployed: 0.7, employed: 18.9, countries: 41 },
+  { industry: '制造业', unemploymentRate: 3.4, unemployed: 3.1, employed: 88.5, countries: 52 },
+  { industry: '运输和仓储', unemploymentRate: 3.3, unemployed: 1.4, employed: 40.3, countries: 44 },
+  { industry: '其他服务活动', unemploymentRate: 3.2, unemployed: 0.6, employed: 17.6, countries: 41 },
+  { industry: '房地产业', unemploymentRate: 2.8, unemployed: 0.2, employed: 6.8, countries: 18 },
+  { industry: '专业、科学和技术服务', unemploymentRate: 2.7, unemployed: 0.9, employed: 31.3, countries: 40 },
+  { industry: '供水、污水和废弃物管理', unemploymentRate: 2.6, unemployed: 0.1, employed: 3.0, countries: 21 },
+  { industry: '卫生和社会工作', unemploymentRate: 2.6, unemployed: 1.7, employed: 64.2, countries: 43 },
+  { industry: '金融和保险业', unemploymentRate: 2.5, unemployed: 0.4, employed: 16.9, countries: 32 },
+  { industry: '教育', unemploymentRate: 2.5, unemployed: 1.3, employed: 49.2, countries: 44 },
+  { industry: '公共管理和社会保障', unemploymentRate: 2.2, unemployed: 0.8, employed: 36.0, countries: 43 },
+  { industry: '国际组织和机构', unemploymentRate: 2.1, unemployed: 0.0, employed: 0.6, countries: 2 },
+  { industry: '电力、燃气、蒸汽和空调供应', unemploymentRate: 1.9, unemployed: 0.1, employed: 4.3, countries: 18 },
+  { industry: '农业、林业和渔业', unemploymentRate: 1.8, unemployed: 1.0, employed: 54.4, countries: 40 }
 ];
 
 function round1(n) { return Math.round(n * 10) / 10; }
@@ -263,6 +296,7 @@ function setModeButtons() {
 
 function fmt(n) { return Number(n).toLocaleString('zh-CN'); }
 function pct(n) { return `${(n*100).toFixed(1)}%`; }
+function rateClass(n) { return n >= 6 ? 'negative' : n <= 3 ? 'positive' : ''; }
 
 function render() {
   const model = document.getElementById('modelSelect').value;
@@ -325,6 +359,10 @@ function render() {
     const cagr5 = Math.pow(d.forecast.at(-1) / d.values.at(-1), 1 / 5) - 1;
     return `<tr><td>${d.industry}</td><td>${fmt(d.values[0])}</td><td>${fmt(d.values.at(-1))}</td><td>${fmt(d.forecast.at(-1))}</td><td class="${change>=0?'positive':'negative'}">${pct(change)}</td><td class="${cagr5>=0?'positive':'negative'}">${pct(cagr5)}</td></tr>`;
   }).join('');
+
+  document.getElementById('unemploymentTbody').innerHTML = unemploymentByIndustry.map(d =>
+    `<tr><td>${d.industry}</td><td class="${rateClass(d.unemploymentRate)}">${d.unemploymentRate.toFixed(1)}%</td><td>${fmt(d.unemployed)} 百万人</td><td>${fmt(d.employed)} 百万人</td><td>${d.countries}</td></tr>`
+  ).join('');
 }
 render();
 </script>
