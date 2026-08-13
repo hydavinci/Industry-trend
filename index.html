@@ -61,14 +61,16 @@
     .positive { color: var(--good); }
     .negative { color: var(--bad); }
     .note { max-width: 1380px; margin: 0 auto; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .note a { color: var(--accent); text-decoration: none; }
+    .note a:hover { text-decoration: underline; }
     @media (max-width: 980px) { .grid, .cards { grid-template-columns: 1fr; } header, main { padding-left: 18px; padding-right: 18px; } }
   </style>
 </head>
 <body>
   <header>
-    <div class="badge">MVP 原型 · 10年历史 + 5年预测</div>
+    <div class="badge">正式数据 · 国家统计局年鉴 · 10年历史 + 5年预测</div>
     <h1>行业从业人员趋势与预测</h1>
-    <div class="subtitle">按行业查看过去 10 年从业人员规模、增长率、结构变化，并用可替换的预测模型展示未来 5 年预测。当前内置为演示数据，接入统计局 / OECD / BLS / World Bank 等正式数据后即可上线。</div>
+    <div class="subtitle">按国家统计局《中国统计年鉴2024》表 4-6，查看城镇非私营单位分行业就业人员数（年底数）的 10 年历史、结构变化，并用可替换的预测模型展示未来 5 年预测。</div>
   </header>
 
   <main>
@@ -85,8 +87,8 @@
     </section>
 
     <section class="cards">
-      <div class="card"><div class="name">最新年份总从业</div><div class="value" id="totalNow">-</div><div class="hint">单位：万人</div></div>
-      <div class="card"><div class="name">5年后预测总从业</div><div class="value" id="totalForecast">-</div><div class="hint">基于当前预测模型</div></div>
+      <div class="card"><div class="name">2023年总从业</div><div class="value" id="totalNow">-</div><div class="hint">城镇非私营单位 · 万人</div></div>
+      <div class="card"><div class="name">2028E预测总从业</div><div class="value" id="totalForecast">-</div><div class="hint">基于当前预测模型</div></div>
       <div class="card"><div class="name">增长最快行业</div><div class="value" id="fastest">-</div><div class="hint">未来5年预测 CAGR</div></div>
       <div class="card"><div class="name">收缩风险行业</div><div class="value" id="weakest">-</div><div class="hint">未来5年预测 CAGR</div></div>
     </section>
@@ -105,31 +107,45 @@
     <section class="table-wrap">
       <table>
         <thead>
-          <tr><th>行业</th><th>2015</th><th>2024</th><th>2030E</th><th>10年变化</th><th>未来5年CAGR</th></tr>
+          <tr><th>行业</th><th id="historyStartHead">2014</th><th id="historyEndHead">2023</th><th id="forecastEndHead">2028E</th><th>10年变化</th><th>未来5年CAGR</th></tr>
         </thead>
         <tbody id="tbody"></tbody>
       </table>
     </section>
 
-    <p class="note">说明：示例数据不代表真实统计口径。正式版建议明确国家/地区、行业分类标准（国民经济行业分类 / NAICS / ISIC）、从业口径（就业人员、城镇单位就业、非农就业等），再建立数据清洗与模型版本管理。</p>
+    <p class="note">数据来源：<a href="https://www.stats.gov.cn/sj/ndsj/2024/indexch.htm" target="_blank" rel="noopener">国家统计局《中国统计年鉴2024》表4-6</a>「按行业分城镇非私营单位就业人员数（年底数）」。口径：城镇非私营单位，单位：万人，历史年份 2014–2023；2024E–2028E 为模型预测，不是官方预测。</p>
   </main>
 
 <script>
-const yearsHistory = Array.from({length: 10}, (_, i) => 2015 + i);
-const yearsForecast = Array.from({length: 5}, (_, i) => 2025 + i);
+const yearsHistory = Array.from({length: 10}, (_, i) => 2014 + i);
+const yearsForecast = Array.from({length: 5}, (_, i) => 2024 + i);
 const units = '万人';
+const dataSource = {
+  name: '国家统计局《中国统计年鉴2024》表4-6',
+  url: 'https://www.stats.gov.cn/sj/ndsj/2024/indexch.htm',
+  scope: '按行业分城镇非私营单位就业人员数（年底数）'
+};
 
 const raw = [
-  { industry: '制造业', values: [12200,11980,11760,11590,11340,11050,10920,10880,10810,10720] },
-  { industry: '建筑业', values: [5100,5260,5400,5520,5600,5480,5550,5620,5700,5750] },
-  { industry: '批发和零售业', values: [6800,6920,7040,7180,7300,7210,7350,7480,7590,7710] },
-  { industry: '交通运输仓储邮政', values: [3150,3260,3380,3510,3650,3580,3710,3860,4020,4180] },
-  { industry: '住宿和餐饮业', values: [2380,2460,2550,2640,2750,2460,2520,2680,2850,3010] },
-  { industry: '信息技术服务业', values: [980,1120,1290,1510,1760,1980,2260,2580,2920,3310] },
-  { industry: '金融业', values: [720,760,805,850,895,910,940,970,1005,1040] },
-  { industry: '教育', values: [1860,1940,2020,2110,2210,2300,2380,2470,2550,2630] },
-  { industry: '卫生和社会工作', values: [1120,1210,1320,1450,1580,1730,1900,2070,2240,2420] },
-  { industry: '农林牧渔业', values: [26500,25500,24400,23200,21900,20700,19600,18500,17600,16800] }
+  { industry: '农、林、牧、渔业', values: [284.6,270.0,263.2,255.4,192.6,134.1,85.7,86.8,78.9,69.3] },
+  { industry: '采矿业', values: [596.5,545.8,490.9,455.4,414.4,367.7,352.1,344.8,340.9,329.3] },
+  { industry: '制造业', values: [5243.1,5068.7,4893.8,4635.5,4178.3,3832.0,3805.5,3828.0,3738.4,3577.8] },
+  { industry: '电力、热力、燃气及水生产和供应业', values: [403.7,396.0,387.6,377.0,369.2,373.1,379.7,382.0,375.3,361.0] },
+  { industry: '建筑业', values: [2921.2,2796.0,2724.7,2643.2,2710.9,2270.5,2153.3,1971.9,1835.2,1638.1] },
+  { industry: '批发和零售业', values: [888.6,883.3,875.0,842.8,823.3,830.0,786.9,797.5,785.3,782.4] },
+  { industry: '交通运输、仓储和邮政业', values: [861.4,854.4,849.5,843.9,819.0,815.5,812.2,798.1,776.2,767.9] },
+  { industry: '住宿和餐饮业', values: [289.3,276.1,269.7,265.9,269.8,265.2,256.6,265.3,255.0,288.4] },
+  { industry: '信息传输、软件和信息技术服务业', values: [336.3,349.9,364.1,395.4,424.3,455.3,487.1,519.2,529.2,529.5] },
+  { industry: '金融业', values: [566.3,606.8,665.2,688.8,699.3,826.1,859.0,818.5,739.6,692.4] },
+  { industry: '房地产业', values: [402.2,417.3,431.7,444.8,466.0,510.3,525.4,529.3,511.5,509.4] },
+  { industry: '租赁和商务服务业', values: [449.4,474.0,488.4,522.6,529.5,660.4,643.6,680.3,738.3,827.8] },
+  { industry: '科学研究和技术服务业', values: [408.0,410.6,419.6,420.4,411.5,434.3,431.2,450.1,455.8,451.7] },
+  { industry: '水利、环境和公共设施管理业', values: [269.1,273.3,269.6,268.5,260.6,244.5,245.6,252.6,253.6,257.9] },
+  { industry: '居民服务、修理和其他服务业', values: [75.4,75.2,75.4,78.2,77.4,86.3,82.8,85.9,90.1,85.2] },
+  { industry: '教育', values: [1727.3,1736.5,1729.2,1730.4,1735.6,1909.3,1958.9,1971.9,1950.6,1940.5] },
+  { industry: '卫生和社会工作', values: [810.4,841.6,867.0,897.9,912.4,1006.2,1051.9,1094.7,1114.5,1126.9] },
+  { industry: '文化、体育和娱乐业', values: [145.5,149.1,150.8,152.2,146.6,151.2,149.5,151.7,146.5,147.0] },
+  { industry: '公共管理、社会保障和社会组织', values: [1599.3,1637.8,1672.6,1725.6,1817.5,1989.8,1972.2,1985.8,1985.8,1985.8] }
 ];
 
 function forecastCagr(values) {
@@ -156,6 +172,9 @@ function enrich(model) {
 const trendChart = echarts.init(document.getElementById('trend'));
 const rankChart = echarts.init(document.getElementById('rank'));
 const select = document.getElementById('industrySelect');
+document.getElementById('historyStartHead').textContent = yearsHistory[0];
+document.getElementById('historyEndHead').textContent = yearsHistory.at(-1);
+document.getElementById('forecastEndHead').textContent = `${yearsForecast.at(-1)}E`;
 raw.forEach(d => select.add(new Option(d.industry, d.industry)));
 
 let allMode = true;
@@ -205,7 +224,7 @@ function render() {
       smooth: true,
       symbolSize: 5,
       data: d.values.concat(d.forecast),
-      markLine: idx === 0 ? { silent: true, symbol: 'none', lineStyle: { type: 'dashed', color: '#fbbf24' }, data: [{ xAxis: 2024 }] } : undefined,
+      markLine: idx === 0 ? { silent: true, symbol: 'none', lineStyle: { type: 'dashed', color: '#fbbf24' }, data: [{ xAxis: yearsHistory.at(-1) }] } : undefined,
       areaStyle: allMode ? undefined : { opacity: .12 }
     }))
   });
