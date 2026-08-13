@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>行业从业人员趋势与预测</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1020'/%3E%3Cpath d='M14 50H52' stroke='%23c7d2fe' stroke-width='2' opacity='.45'/%3E%3Cpath d='M14 16V50' stroke='%23c7d2fe' stroke-width='2' opacity='.45'/%3E%3Crect x='18' y='34' width='7' height='16' rx='2' fill='%237dd3fc'/%3E%3Crect x='29' y='26' width='7' height='24' rx='2' fill='%23a78bfa'/%3E%3Crect x='40' y='18' width='7' height='32' rx='2' fill='%2334d399'/%3E%3Cpath d='M16 39C23 34 28 31 33 28C39 24.5 44 21 50 13' fill='none' stroke='%237dd3fc' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='13' r='4' fill='%23e0f2fe'/%3E%3C/svg%3E" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,.08);
+      --panel-2: rgba(255,255,255,.12);
+      --text: #eef3ff;
+      --muted: #9ca9c7;
+      --accent: #7dd3fc;
+      --accent-2: #a78bfa;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --border: rgba(255,255,255,.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(125,211,252,.22), transparent 32rem),
+        radial-gradient(circle at top right, rgba(167,139,250,.22), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+    }
+    header { padding: 32px 32px 16px; }
+    h1 { margin: 0 0 10px; font-size: clamp(26px, 4vw, 44px); letter-spacing: -.04em; }
+    .subtitle { color: var(--muted); max-width: 920px; line-height: 1.7; }
+    .badge { display: inline-flex; gap: 8px; align-items: center; color: #dbeafe; background: rgba(59,130,246,.16); border: 1px solid rgba(125,211,252,.22); padding: 6px 10px; border-radius: 999px; font-size: 13px; margin-bottom: 14px; }
+    main { padding: 16px 32px 36px; display: grid; gap: 18px; }
+    .toolbar, .grid, .cards, .table-wrap { max-width: 1380px; width: 100%; margin: 0 auto; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 20px; backdrop-filter: blur(16px); }
+    label { color: var(--muted); font-size: 14px; }
+    select, button {
+      color: var(--text); background: rgba(15,23,42,.86); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; outline: none;
+    }
+    button { cursor: pointer; }
+    button.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(125,211,252,.14); }
+    .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .card { padding: 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 20px; }
+    .card .name { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+    .card .value { font-size: 28px; font-weight: 750; letter-spacing: -.03em; }
+    .card .hint { color: var(--muted); margin-top: 8px; font-size: 13px; }
+    .grid { display: grid; grid-template-columns: 1.45fr .95fr; gap: 18px; }
+    .panel { min-height: 430px; background: var(--panel); border: 1px solid var(--border); border-radius: 22px; padding: 18px; }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; }
+    #trend, #rank { height: 360px; }
+    .table-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 22px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 13px 14px; text-align: right; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 14px; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #c7d2fe; background: rgba(255,255,255,.06); font-weight: 650; }
+    td { color: #e5edff; }
+    .positive { color: var(--good); }
+    .negative { color: var(--bad); }
+    .note { max-width: 1380px; margin: 0 auto; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    @media (max-width: 980px) { .grid, .cards { grid-template-columns: 1fr; } header, main { padding-left: 18px; padding-right: 18px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="badge">MVP 原型 · 10年历史 + 5年预测</div>
+    <h1>行业从业人员趋势与预测</h1>
+    <div class="subtitle">按行业查看过去 10 年从业人员规模、增长率、结构变化，并用可替换的预测模型展示未来 5 年预测。当前内置为演示数据，接入统计局 / OECD / BLS / World Bank 等正式数据后即可上线。</div>
+  </header>
+
+  <main>
+    <section class="toolbar">
+      <label for="industrySelect">行业</label>
+      <select id="industrySelect"></select>
+      <button id="showAll" class="active">显示全部行业</button>
+      <button id="showSelected">仅看所选行业</button>
+      <label for="modelSelect">预测模型</label>
+      <select id="modelSelect">
+        <option value="cagr">CAGR 趋势外推</option>
+        <option value="linear">线性回归</option>
+      </select>
+    </section>
+
+    <section class="cards">
+      <div class="card"><div class="name">最新年份总从业</div><div class="value" id="totalNow">-</div><div class="hint">单位：万人</div></div>
+      <div class="card"><div class="name">5年后预测总从业</div><div class="value" id="totalForecast">-</div><div class="hint">基于当前预测模型</div></div>
+      <div class="card"><div class="name">增长最快行业</div><div class="value" id="fastest">-</div><div class="hint">未来5年预测 CAGR</div></div>
+      <div class="card"><div class="name">收缩风险行业</div><div class="value" id="weakest">-</div><div class="hint">未来5年预测 CAGR</div></div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>从业人员历史与预测</h2>
+        <div id="trend"></div>
+      </div>
+      <div class="panel">
+        <h2>最新年份行业规模排行</h2>
+        <div id="rank"></div>
+      </div>
+    </section>
+
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>行业</th><th>2015</th><th>2024</th><th>2030E</th><th>10年变化</th><th>未来5年CAGR</th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </section>
+
+    <p class="note">说明：示例数据不代表真实统计口径。正式版建议明确国家/地区、行业分类标准（国民经济行业分类 / NAICS / ISIC）、从业口径（就业人员、城镇单位就业、非农就业等），再建立数据清洗与模型版本管理。</p>
+  </main>
+
+<script>
+const yearsHistory = Array.from({length: 10}, (_, i) => 2015 + i);
+const yearsForecast = Array.from({length: 5}, (_, i) => 2025 + i);
+const units = '万人';
+
+const raw = [
+  { industry: '制造业', values: [12200,11980,11760,11590,11340,11050,10920,10880,10810,10720] },
+  { industry: '建筑业', values: [5100,5260,5400,5520,5600,5480,5550,5620,5700,5750] },
+  { industry: '批发和零售业', values: [6800,6920,7040,7180,7300,7210,7350,7480,7590,7710] },
+  { industry: '交通运输仓储邮政', values: [3150,3260,3380,3510,3650,3580,3710,3860,4020,4180] },
+  { industry: '住宿和餐饮业', values: [2380,2460,2550,2640,2750,2460,2520,2680,2850,3010] },
+  { industry: '信息技术服务业', values: [980,1120,1290,1510,1760,1980,2260,2580,2920,3310] },
+  { industry: '金融业', values: [720,760,805,850,895,910,940,970,1005,1040] },
+  { industry: '教育', values: [1860,1940,2020,2110,2210,2300,2380,2470,2550,2630] },
+  { industry: '卫生和社会工作', values: [1120,1210,1320,1450,1580,1730,1900,2070,2240,2420] },
+  { industry: '农林牧渔业', values: [26500,25500,24400,23200,21900,20700,19600,18500,17600,16800] }
+];
+
+function forecastCagr(values) {
+  const recent = values.slice(-5);
+  const cagr = Math.pow(recent.at(-1) / recent[0], 1 / (recent.length - 1)) - 1;
+  let last = values.at(-1);
+  return yearsForecast.map(() => Math.round(last *= (1 + cagr)));
+}
+
+function forecastLinear(values) {
+  const n = values.length;
+  const xs = values.map((_, i) => i);
+  const meanX = xs.reduce((a,b)=>a+b,0)/n;
+  const meanY = values.reduce((a,b)=>a+b,0)/n;
+  const slope = xs.reduce((s,x,i)=>s+(x-meanX)*(values[i]-meanY),0) / xs.reduce((s,x)=>s+(x-meanX)**2,0);
+  const intercept = meanY - slope * meanX;
+  return yearsForecast.map((_, i) => Math.max(0, Math.round(intercept + slope * (n + i))));
+}
+
+function enrich(model) {
+  return raw.map(d => ({...d, forecast: model === 'linear' ? forecastLinear(d.values) : forecastCagr(d.values)}));
+}
+
+const trendChart = echarts.init(document.getElementById('trend'));
+const rankChart = echarts.init(document.getElementById('rank'));
+const select = document.getElementById('industrySelect');
+raw.forEach(d => select.add(new Option(d.industry, d.industry)));
+
+let allMode = true;
+
+document.getElementById('showAll').onclick = () => { allMode = true; setModeButtons(); render(); };
+document.getElementById('showSelected').onclick = () => { allMode = false; setModeButtons(); render(); };
+select.onchange = () => render();
+document.getElementById('modelSelect').onchange = () => render();
+window.addEventListener('resize', () => { trendChart.resize(); rankChart.resize(); });
+
+function setModeButtons() {
+  document.getElementById('showAll').classList.toggle('active', allMode);
+  document.getElementById('showSelected').classList.toggle('active', !allMode);
+}
+
+function fmt(n) { return Number(n).toLocaleString('zh-CN'); }
+function pct(n) { return `${(n*100).toFixed(1)}%`; }
+
+function render() {
+  const model = document.getElementById('modelSelect').value;
+  const data = enrich(model);
+  const chosen = select.value;
+  const visible = allMode ? data : data.filter(d => d.industry === chosen);
+  const allYears = yearsHistory.concat(yearsForecast);
+  const nowTotal = data.reduce((s,d)=>s+d.values.at(-1),0);
+  const forecastTotal = data.reduce((s,d)=>s+d.forecast.at(-1),0);
+  const rankedGrowth = data.map(d => ({
+    industry: d.industry,
+    cagr5: Math.pow(d.forecast.at(-1) / d.values.at(-1), 1 / 5) - 1
+  })).sort((a,b)=>b.cagr5-a.cagr5);
+
+  document.getElementById('totalNow').textContent = fmt(nowTotal);
+  document.getElementById('totalForecast').textContent = fmt(forecastTotal);
+  document.getElementById('fastest').textContent = `${rankedGrowth[0].industry} ${pct(rankedGrowth[0].cagr5)}`;
+  document.getElementById('weakest').textContent = `${rankedGrowth.at(-1).industry} ${pct(rankedGrowth.at(-1).cagr5)}`;
+
+  trendChart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', valueFormatter: v => `${fmt(v)} ${units}` },
+    legend: { type: 'scroll', textStyle: { color: '#cbd5e1' }, top: 0 },
+    grid: { top: 48, left: 56, right: 24, bottom: 42 },
+    xAxis: { type: 'category', data: allYears, axisLabel: { color: '#aab6d3' }, axisLine: { lineStyle: { color: 'rgba(255,255,255,.18)' } } },
+    yAxis: { type: 'value', axisLabel: { color: '#aab6d3' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,.08)' } } },
+    series: visible.map((d, idx) => ({
+      name: d.industry,
+      type: 'line',
+      smooth: true,
+      symbolSize: 5,
+      data: d.values.concat(d.forecast),
+      markLine: idx === 0 ? { silent: true, symbol: 'none', lineStyle: { type: 'dashed', color: '#fbbf24' }, data: [{ xAxis: 2024 }] } : undefined,
+      areaStyle: allMode ? undefined : { opacity: .12 }
+    }))
+  });
+
+  const rank = [...data].sort((a,b)=>a.values.at(-1)-b.values.at(-1));
+  rankChart.setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: v => `${fmt(v)} ${units}` },
+    grid: { top: 8, left: 92, right: 24, bottom: 32 },
+    xAxis: { type: 'value', axisLabel: { color: '#aab6d3' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,.08)' } } },
+    yAxis: { type: 'category', data: rank.map(d=>d.industry), axisLabel: { color: '#cbd5e1' }, axisLine: { show: false } },
+    series: [{ type: 'bar', data: rank.map(d=>d.values.at(-1)), itemStyle: { borderRadius: [0,8,8,0], color: new echarts.graphic.LinearGradient(0,0,1,0,[{offset:0,color:'#38bdf8'},{offset:1,color:'#a78bfa'}]) } }]
+  });
+
+  document.getElementById('tbody').innerHTML = data.map(d => {
+    const change = d.values.at(-1) / d.values[0] - 1;
+    const cagr5 = Math.pow(d.forecast.at(-1) / d.values.at(-1), 1 / 5) - 1;
+    return `<tr><td>${d.industry}</td><td>${fmt(d.values[0])}</td><td>${fmt(d.values.at(-1))}</td><td>${fmt(d.forecast.at(-1))}</td><td class="${change>=0?'positive':'negative'}">${pct(change)}</td><td class="${cagr5>=0?'positive':'negative'}">${pct(cagr5)}</td></tr>`;
+  }).join('');
+}
+render();
+</script>
+</body>
+</html>
